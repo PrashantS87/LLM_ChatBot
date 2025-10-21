@@ -4,17 +4,16 @@ from langchain.prompts import PromptTemplate
 from langchain_community.llms import HuggingFacePipeline
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import os
 
 app = Flask(__name__)
 
 # 1. Load the Open-Source LLM and Tokenizer
-# We are using a smaller, quantized version of Llama 3 for faster inference on a single GPU.
-# For higher performance, you would use a larger model on a more powerful GPU.
-model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"  # change if OOM
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
-    torch_dtype=torch.bfloat16,
+    torch_dtype=torch.float16,   # changed from bfloat16
     device_map="auto",
 )
 
@@ -29,13 +28,11 @@ pipe = pipeline(
 llm = HuggingFacePipeline(pipeline=pipe)
 
 # 2. Create a Prompt Template
-template = """
-You are a helpful and friendly chatbot. A user will ask you a question.
-Provide a concise and accurate answer.
+template = """You are a helpful and friendly chatbot. Answer user questions clearly and concisely.
 
-User Question: {question}
-Chatbot Answer:
-"""
+Question: {question}
+Answer:"""
+
 prompt = PromptTemplate(template=template, input_variables=["question"])
 
 # 3. Create an LLMChain
@@ -51,7 +48,7 @@ def chat():
 
     try:
         response = llm_chain.run(question)
-        return jsonify({"response": response})
+        return jsonify({"response": response.strip()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
