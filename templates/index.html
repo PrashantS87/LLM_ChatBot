@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive AI Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Google Fonts for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Your AI Assistant</h1>
+        <div id="chat-window">
+            <div class="message assistant">
+                <p>Hello! How can I help you today?</p>
+            </div>
+        </div>
+        <div class="input-area">
+            <textarea id="user-input" placeholder="Ask me anything..." rows="3"></textarea>
+            <button id="send-button">Send</button>
+        </div>
+        <div id="loading-indicator" class="hidden">
+            <div class="spinner"></div>
+            <span>Thinking...</span>
+        </div>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            const p = document.createElement('p');
+            p.textContent = text;
+            messageDiv.appendChild(p);
+            chatWindow.appendChild(messageDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to bottom
+        }
+
+        async function sendMessage() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            addMessage('user', query);
+            userInput.value = ''; // Clear input
+            userInput.disabled = true;
+            sendButton.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                addMessage('assistant', data.response);
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('assistant', 'Oops! Something went wrong. Please try again.');
+            } finally {
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+                userInput.focus(); // Focus back on input
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) { // Allow Shift+Enter for new line
+                event.preventDefault(); // Prevent default Enter behavior (new line)
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
