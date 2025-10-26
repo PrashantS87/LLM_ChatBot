@@ -23,7 +23,7 @@ def LLM_Process(user_query):
 
     
 
-    llm=ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7,max_tokens=1000, timeout=None,max_retries=2)
+    llm=ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.7,max_tokens=10000, timeout=None,max_retries=2)
 
     # messages = [("System","Hi, Welcome to your personal AI Chatbot"),("human", "I love Reading books"),]
 
