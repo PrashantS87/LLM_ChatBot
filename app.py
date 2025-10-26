@@ -37,6 +37,8 @@ def LLM_Process(user_query):
 
     ai_msg = llm.invoke(messages)
     response = ai_msg.content
+    tokens = llm.max_output_tokens
+    print(tokens)
     return response
 
 
