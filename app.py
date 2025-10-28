@@ -13,7 +13,7 @@ app = Flask(__name__)
 def LLM_Process(user_query):
 
     api_key = os.getenv("GOOGLE_API_KEY")
-    # api_key = "AIzaSyAq9D9SnvZa67Aoo41mdoz7ZyqASvSJrM4"
+    
 
     print(api_key)
 
