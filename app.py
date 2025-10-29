@@ -13,7 +13,7 @@ app = Flask(__name__)
 def LLM_Process(user_query):
 
     api_key = os.getenv("GOOGLE_API_KEY")
-    # api_key = "AIzaSyAq9D9SnvZa67Aoo41mdoz7ZyqASvSJrM4"
+    
 
     print(api_key)
 
@@ -45,12 +45,12 @@ def LLM_Process(user_query):
 
 @app.route('/')
 def index():
-    """Serves the main interactive page."""
+  
     return render_template('index.html')
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    """Handles user queries and returns AI responses."""
+   
     user_input = request.json.get('query')
     if not user_input:
         return jsonify({"error": "No query provided"}), 400
