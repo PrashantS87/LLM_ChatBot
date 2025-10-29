@@ -1,90 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive AI Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Google Fonts for a modern look -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <title>LLM Based - AI Chatbot</title>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background-color: #f7f7f7; }
+    textarea { width: 80%; height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .response-container { margin-top: 20px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .copy-btn { margin-top: 10px; background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+    .copy-btn:hover { background: #218838; }
+    pre { background: #f4f4f4; padding: 10px; border-radius: 8px; overflow-x: auto; }
+  </style>
+
+  <!-- Highlight.js for syntax highlighting -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
 </head>
 <body>
-    <div class="container">
-        <h1>Your AI Assistant</h1>
-        <div id="chat-window">
-            <div class="message assistant">
-                <p>Hello! How can I help you today?</p>
-            </div>
-        </div>
-        <div class="input-area">
-            <textarea id="user-input" placeholder="Ask me anything..." rows="3"></textarea>
-            <button id="send-button">Send</button>
-        </div>
-        <div id="loading-indicator" class="hidden">
-            <div class="spinner"></div>
-            <span>Thinking...</span>
-        </div>
-    </div>
 
-    <script>
-        const chatWindow = document.getElementById('chat-window');
-        const userInput = document.getElementById('user-input');
-        const sendButton = document.getElementById('send-button');
-        const loadingIndicator = document.getElementById('loading-indicator');
+  <h2>💬 Gemini Flash 2.5 Chatbot</h2>
 
-        function addMessage(sender, text) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', sender);
-            const p = document.createElement('p');
-            p.textContent = text;
-            messageDiv.appendChild(p);
-            chatWindow.appendChild(messageDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to bottom
-        }
+  <textarea id="query" placeholder="Ask me anything..."></textarea><br><br>
+  <button onclick="askGemini()">Submit</button>
 
-        async function sendMessage() {
-            const query = userInput.value.trim();
-            if (!query) return;
+  <div id="response-area" class="response-container" style="display:none;">
+    <div id="response"></div>
+    <button class="copy-btn" onclick="copyResponse()">Copy</button>
+  </div>
 
-            addMessage('user', query);
-            userInput.value = ''; // Clear input
-            userInput.disabled = true;
-            sendButton.disabled = true;
-            loadingIndicator.classList.remove('hidden');
+  <script>
+    async function askGemini() {
+      const query = document.getElementById("query").value.trim();
+      if (!query) return alert("Please enter a question.");
 
-            try {
-                const response = await fetch('/ask', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ query: query })
-                });
+      const responseArea = document.getElementById("response-area");
+      const responseDiv = document.getElementById("response");
+      responseArea.style.display = "block";
+      responseDiv.innerHTML = "⏳ Thinking...";
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
 
-                const data = await response.json();
-                addMessage('assistant', data.response);
-            } catch (error) {
-                console.error('Error sending message:', error);
-                addMessage('assistant', 'Oops! Something went wrong. Please try again.');
-            } finally {
-                userInput.disabled = false;
-                sendButton.disabled = false;
-                loadingIndicator.classList.add('hidden');
-                userInput.focus(); // Focus back on input
-            }
-        }
+      if (data.response) {
+        responseDiv.innerHTML = data.response;
+        hljs.highlightAll(); // re-run syntax highlighting
+      } else {
+        responseDiv.innerText = data.error || "Something went wrong.";
+      }
+    }
 
-        sendButton.addEventListener('click', sendMessage);
-        userInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' && !event.shiftKey) { // Allow Shift+Enter for new line
-                event.preventDefault(); // Prevent default Enter behavior (new line)
-                sendMessage();
-            }
-        });
-    </script>
+    function copyResponse() {
+      const text = document.getElementById("response").innerText;
+      navigator.clipboard.writeText(text);
+      alert("✅ Copied to clipboard!");
+    }
+  </script>
 </body>
 </html>
