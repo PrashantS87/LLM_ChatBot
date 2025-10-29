@@ -1,10 +1,10 @@
 
 import os
 from dotenv import load_dotenv, dotenv_values
-
+import markdown
 from langchain_google_genai import ChatGoogleGenerativeAI
-
 from flask import Flask,  render_template, request, jsonify
+
 load_dotenv()
 print(os.getenv("GOOGLE_API_KEY"))
 app = Flask(__name__)
@@ -36,10 +36,11 @@ def LLM_Process(user_query):
     ]
 
     ai_msg = llm.invoke(messages)
-    response = ai_msg.content
+    response_text = ai_msg.content or "No Response Received, Please report this incident."
     tokens = llm.max_output_tokens
-    print(tokens)
-    return response
+    print("Output Tokens: ", tokens)
+    response_html = markdown.markdown(response_text, extensions=["fenced_code", "tables"])
+    return response_html
 
 
 @app.route('/')
@@ -54,11 +55,13 @@ def ask():
     if not user_input:
         return jsonify({"error": "No query provided"}), 400
 
-    ai_response = LLM_Process(user_input)
-    return jsonify({"response": ai_response})
+    response_html = LLM_Process(user_input)
+    return jsonify({"response": response_html})
 
 if __name__ == '__main__':
     # This is for local development only. App Engine uses the 'entrypoint' from app.yaml.
     # app.run(debug=True, host='0.0.0.0', port=8080)
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
+
